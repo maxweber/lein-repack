@@ -27,14 +27,19 @@
       (update-in [:dependencies] #(apply conj (vec %) (map :coordinate branches)))
       (assoc :files [])))
 
+(defn base [project]
+  (if (false? (get-in project [:repack-opts :include-name]))
+    ""
+    (str (:name project) ".")))
+
 (defn create-branch-entry [project filemap i-deps ex-deps pkg]
-  (let [{:keys [group version] base :name} project
-        name   (str group "/" base "." pkg)]
+  (let [{:keys [group version]} project
+        name   (str group "/" (base project) pkg)]
     {:coordinate [(symbol name) version]
      :files (mapv :path (get filemap pkg))
      :dependencies (->> (get i-deps pkg)
                         (map (fn [k]
-                               [(symbol (str group "/" base "." k)) version]))
+                               [(symbol (str group (base project) k)) version]))
                         (concat [['org.clojure/clojure (clj-version project)]]
                                 (filter identity (get ex-deps pkg)))
                         vec)
